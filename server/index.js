@@ -7,7 +7,7 @@ const axios = require("axios");
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 
 // Health check
@@ -15,12 +15,12 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Get all flagged transactions
+// Get all pending flagged transactions
 app.get("/api/transactions", async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT * FROM transactions 
-       WHERE status = 'pending' 
+      `SELECT * FROM transactions
+       WHERE status = 'pending'
        ORDER BY created_at DESC`
     );
     res.json(result.rows);
@@ -30,25 +30,30 @@ app.get("/api/transactions", async (req, res) => {
   }
 });
 
-// Score a new transaction
+// Score a new transaction via Python ML service
 app.post("/api/transactions/score", async (req, res) => {
   const txn = req.body;
   try {
-    // Call Python ML service
     const mlResponse = await axios.post(
       `${process.env.ML_SERVICE_URL}/score`,
       txn
     );
-    const { risk_score, fraud_pattern, analyst_explanation, customer_explanation } =
-      mlResponse.data;
+    const {
+      risk_score,
+      fraud_pattern,
+      analyst_explanation,
+      customer_explanation,
+      top_features,
+    } = mlResponse.data;
 
-    // Persist to PostgreSQL
     const result = await pool.query(
-      `INSERT INTO transactions 
+      `INSERT INTO transactions
         (transaction_id, timestamp, sender_account, receiver_account,
          amount, channel, sender_city, device_id, merchant_category,
-         risk_score, fraud_pattern, analyst_explanation, customer_explanation, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'pending')
+         risk_score, fraud_pattern, analyst_explanation,
+         customer_explanation, top_features, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'pending')
+       ON CONFLICT (transaction_id) DO NOTHING
        RETURNING *`,
       [
         txn.transaction_id,
@@ -64,13 +69,14 @@ app.post("/api/transactions/score", async (req, res) => {
         fraud_pattern,
         analyst_explanation,
         customer_explanation,
+        JSON.stringify(top_features),
       ]
     );
 
-    res.json(result.rows[0]);
+    res.json(result.rows[0] || { message: "already exists" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Scoring failed" });
+    res.status(500).json({ error: "Scoring failed", detail: err.message });
   }
 });
 
@@ -78,18 +84,14 @@ app.post("/api/transactions/score", async (req, res) => {
 app.post("/api/decisions", async (req, res) => {
   const { transaction_id, action } = req.body;
   try {
-    // Record the decision
     await pool.query(
       `INSERT INTO decisions (transaction_id, action) VALUES ($1, $2)`,
       [transaction_id, action]
     );
-
-    // Update transaction status
     await pool.query(
       `UPDATE transactions SET status = $1 WHERE transaction_id = $2`,
       [action, transaction_id]
     );
-
     res.json({ success: true });
   } catch (err) {
     console.error(err);

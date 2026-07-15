@@ -8,7 +8,7 @@ const feed = [
   { status: "flagged", label: "Geo mismatch", amount: "₹14,440.04", time: "22 min ago" },
 ];
 
-export default function Hero() {
+export default function Hero({ onEnter }) {
   return (
     <section className="relative overflow-hidden bg-slate-50">
       <div className="pointer-events-none absolute -top-24 -left-24 w-[28rem] h-[28rem] rounded-full bg-slate-200 opacity-40 blur-3xl" />
@@ -31,6 +31,7 @@ export default function Hero() {
         </p>
         <div className="mt-8 flex items-center justify-center gap-3">
           <button
+            onClick={onEnter}
             className="px-6 py-3 rounded-full text-sm font-medium inline-flex items-center gap-1.5 transition-colors"
             style={{backgroundColor: '#000000', color: '#ffffff'}}
           >
@@ -47,7 +48,6 @@ export default function Hero() {
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 pb-24 pt-10">
         <div className="relative h-[420px] md:h-[300px]">
-
           <div className="absolute left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 top-0 w-72 -rotate-2 bg-white rounded-2xl border border-slate-200 shadow-xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <ShieldAlert size={16} className="text-red-600" />
@@ -91,7 +91,6 @@ export default function Hero() {
               ))}
             </div>
           </div>
-
         </div>
       </div>
     </section>

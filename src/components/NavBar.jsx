@@ -1,4 +1,4 @@
-export default function NavBar() {
+export default function NavBar({ onEnter }) {
   return (
     <nav className="relative z-20 flex items-center justify-between px-8 py-6 max-w-6xl mx-auto">
       <div className="flex items-center gap-2">
@@ -15,6 +15,7 @@ export default function NavBar() {
       </div>
 
       <button
+        onClick={onEnter}
         className="px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
         style={{backgroundColor: '#0B2226', color: '#ffffff'}}
       >
