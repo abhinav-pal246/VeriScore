@@ -1,8 +1,6 @@
-// Quick seed script — sends sample transactions through Express
-// which calls Python, scores them, and stores in PostgreSQL
-// Run with: node seed.js (from the server/ folder)
-
 const axios = require("axios");
+
+const BASE_URL = "https://veriscore-vvs1.onrender.com";
 
 const transactions = [
   {
@@ -63,21 +61,19 @@ const transactions = [
 ];
 
 async function seed() {
-  console.log("Seeding transactions...");
+  console.log(`Seeding transactions to ${BASE_URL}...`);
   for (const txn of transactions) {
     try {
       const res = await axios.post(
-        "http://localhost:4000/api/transactions/score",
+        `${BASE_URL}/api/transactions/score`,
         txn
       );
-      console.log(
-        `✓ ${txn.transaction_id} — risk score: ${res.data.risk_score}`
-      );
+      console.log(`✓ ${txn.transaction_id} — risk score: ${res.data.risk_score}`);
     } catch (err) {
       console.error(`✗ ${txn.transaction_id}:`, err.response?.data || err.message);
     }
   }
-  console.log("\nDone. Check dashboard at http://localhost:5173");
+  console.log("\nDone. Check dashboard at https://veri-score-six.vercel.app");
 }
 
 seed();
