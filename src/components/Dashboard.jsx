@@ -82,7 +82,7 @@ export default function Dashboard({ onBack }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/transactions")
+    fetch(`${import.meta.env.VITE_API_URL}/api/transactions`)
       .then((r) => r.json())
       .then((data) => {
         const mapped = data.map(mapRow);
@@ -97,7 +97,7 @@ export default function Dashboard({ onBack }) {
   }, []);
 
   function handleDecision(id, action) {
-    fetch("http://localhost:4000/api/decisions", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/decisions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ transaction_id: id, action }),
